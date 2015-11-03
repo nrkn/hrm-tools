@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>hrm-tools</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <style>      
+      #input {
+        text-transform: uppercase;
+        font-size: 2.5rem;
+      }
+      
+      #preview {
+        background: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body class="document">
+    <header>
+      <h1>
+        <a href="#"><i class="fa fa-github"></i></a>
+        <a href="/">hrm-tools</a>
+      </h1>
+      <h2>A collection of Human Resource Machine tools for the browser</h2>
+      <nav>
+        <ul class="row">
+          <li class="col-1-3">
+            <a href="/">Home</a>
+            <p>
+              About Human Resource Machine and these tools
+            </p>
+          </li>
+          <li class="col-1-3">
+            <a href="/emulator">Emulator</a>
+            <p>
+              Run/step through HRM programs
+            </p>
+          </li>
+          <li class="col-1-3">
+            <a href="/label-comment-maker" class="current">Label/Comment Maker</a>
+            <p>
+              Create label/comment images from text
+            </p>
+          </li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h1>Label/Comment Maker</h1>
+        <p>
+          Makes labels/comments that you can paste into your ASM code. Some notes:
+        </p>
+        <ul>
+          <li>Supports all printable ASCII characters</li>
+          <li>If your text is too wide or hight it will be rescaled, and can quickly become unreadable</li>
+          <li>If your text is too long, it will be truncated - the game's image format has a size limit</li>
+        </ul>
+        <div class="row">
+          <div class="col-1-2">
+            <label for="input">Text</label>
+            <div class="aspect aspect-3-1">
+              <div class="content">
+                <textarea id="input" wrap="off">Hello
+World!</textarea>
+              </div>
+            </div>
+          </div>
+          <div class="col-1-2">
+            <label>Preview</label>
+            <div class="aspect aspect-3-1">
+              <div class="content" id="preview">
+              </div>  
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-1-2">
+            <label for="image">Image</label>
+            <div class="aspect aspect-3-1">
+              <div class="content">
+                <textarea id="image" readonly wrap="off"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="col-1-2">
+            <label for="asm">ASM</label>
+            <div class="aspect aspect-3-1">
+              <div class="content">
+                <textarea id="asm" readonly wrap="off"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button id="generate">Generate</button>
+      </section>
+    </main>
+    <footer>
+      <p>
+        © 2015 <a href="mailto:nrkn.com@gmail.com">Nik Coughlin</a>
+      </p>
+    </footer>
+    <script src="/js/polyfills.js"></script>
+    <script src="/js/hrm-web.js"></script>
+    <script>
+      (function(){
+        'use strict'
+        
+        function generate(){
+          var input = document.getElementById( 'input' )
+          var image = document.getElementById( 'image' )
+          var asm = document.getElementById( 'asm' )
+          var preview = document.getElementById( 'preview' )
+          
+          var canvas = hrm.draw.Canvas()
+          
+          canvas.text( input.value )
+          
+          image.textContent = canvas.toImage()
+          
+          asm.textContent = canvas.toAsm()
+          
+          preview.innerHTML = canvas.toSvg()
+        }   
+
+        document.getElementById( 'generate' ).addEventListener( 'click', function( event ) {
+          generate()
+        }, false )
+  
+        generate()
+      })()
+    </script>  
+  </body>
+</html>
