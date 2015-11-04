@@ -55,7 +55,7 @@
           Makes labels/comments that you can paste into your ASM code. Some notes:
         </p>
         <ul>
-          <li>Supports all printable ASCII characters</li>
+          <li>Supports all printable ASCII characters (except lowercase, converts to upper)</li>
           <li>If your text is too wide or high it will be rescaled, and can quickly become unreadable</li>
           <li>If your text is too long, it will be truncated - the game's image format has a size limit</li>
         </ul>
@@ -71,10 +71,8 @@ World!</textarea>
           </div>
           <div>
             <label>Preview</label>
-            <div class="aspect aspect-3-1">
-              <div class="content" id="preview">
-              </div>  
-            </div>
+            <div id="preview">
+            </div>  
           </div>
         </div>
         <div class="row">
