@@ -7,40 +7,86 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" />
     <link rel="stylesheet" href="../css/main.css" />
+    <style>     
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+      
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      main {
+        display: flex;
+        flex-direction: row;
+        flex-grow: 1;
+      }
+      
+      main > section {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+      
+      #floor {
+        flex-grow: 3;
+      }
+      
+      #code {
+        flex-grow: 1;
+      }
+      
+      #code textarea {
+        width: 100%;
+        height: 100%;
+        resize: none;
+      }
+      
+      menu {
+        padding-left: 0;
+      }
+    </style>
   </head>
-  <body class="document">
+  <body>
     <header>
       <h1>
         <a href="https://github.com/nrkn/hrm-tools"><i class="fa fa-github"></i></a>
         <a href="../">hrm-tools</a>
       </h1>
-      <h2>A collection of Human Resource Machine tools for the browser</h2>
-      <nav>
-        <ul class="row">
-          <li class="col-1-3">
-            <a href="../">Home</a>
-            <p>
-              About Human Resource Machine and these tools
-            </p>
-          </li>
-          <li class="col-1-3">
-            <a href="../emulator" class="current">Emulator</a>
-            <p>
-              Run/step through HRM programs
-            </p>
-          </li>
-          <li class="col-1-3">
-            <a href="../label-comment-maker">Label/Comment Maker</a>
-            <p>
-              Create label/comment images from text
-            </p>
-          </li>
-        </ul>
-      </nav>
+      <h2>Emulator</h2>
     </header>
+    <menu>
+      <label>Setup: <select id="level"></select></label>
+      <button id="run">Run</button>
+    </menu>
     <main>
-      <h1>Emulator</h1>
-      <p>Coming soon</p>
+      <section id="inbox">
+        <h1>Inbox</h1>
+        <ul></ul>
+      </section>
+      <section id="floor">
+        <h1>Floor</h1>
+        <ol start="0"></ol>
+      </section>
+      <section id="outbox">
+        <h1>Outbox</h1>
+        <ul></ul>
+      </section>
+      <section id="code">
+        <h1>Code</h1>
+        <textarea wrap="off"></textarea>
+      </section>
+      <!--
+      <menu id="debug">
+        <ul>
+          <li>Run</li>
+          <li>Step</li>
+        </ul>
+      </menu>
+      -->
     </main>
     <footer>
       <p>
@@ -52,6 +98,115 @@
     <script>
       (function(){
         'use strict'
+        
+        var inbox = document.querySelector( '#inbox > ul' )
+        var outbox = document.querySelector( '#outbox > ul' )
+        var floor = document.querySelector( '#floor > ol' )
+        var code = document.querySelector( '#code > textarea' )
+        
+        var levelSelect = document.getElementById( 'level' )
+        var run = document.getElementById( 'run' )
+        
+        function initLevelSelect(){
+          levelSelect.innerHTML = ''
+          
+          hrm.levelData.forEach( function( level, i ){
+            var option = document.createElement( 'option' )
+            
+            option.value = level.number
+            option.text = level.number + '. ' + level.name
+            option.selected = level.number === 1
+            
+            levelSelect.add( option, null )
+          })
+        }
+        
+        function setInbox( values ){
+          inbox.innerHTML = ''
+          
+          values.forEach( function( value ){
+            var li = document.createElement( 'li' )
+            
+            li.textContent = value
+            
+            inbox.appendChild( li )
+          })
+        }
+        
+        function setOutbox( values ){
+          outbox.innerHTML = ''
+          
+          values.slice().reverse().forEach( function( value ){
+            var li = document.createElement( 'li' )
+            
+            li.textContent = value
+            
+            outbox.appendChild( li )
+          })
+        }
+        
+        function setFloor( values ){
+          floor.innerHTML = ''
+          
+          var keys = Object.keys( values ).map( function( n ){ 
+            return Number( n ) 
+          })
+            
+          var max = Math.max.apply( null, keys )
+          
+          for( var i = 0; i <= max; i++ ){
+            var li = document.createElement( 'li' )
+            
+            var value = values[ i ]
+            
+            li.textContent = value === 0 ? value : value ? value : ''
+            
+            floor.appendChild( li )
+          }
+        }
+        
+        function loadLevel( n ){
+          var level = hrm.levelData.find( function( level ){
+            return level.number === n
+          })
+          
+          return level          
+        }
+        
+        run.onclick = function(){
+          var levelNumber = Number( levelSelect[ levelSelect.selectedIndex ].value )
+          
+          var source = code.value
+          var level = loadLevel( levelNumber )
+          var example = level.examples[ 0 ]          
+          var floor = level.floor || {}
+          
+          setInbox( example.inbox )
+          setFloor( floor )
+          
+          var program;
+          
+          try{
+            program = hrm.parser( source )
+          } catch( e ){
+            alert( e )
+            return
+          }
+          
+          var cpu = hrm.cpu( program, example.inbox, floor || {} )
+          
+          cpu.run( function( err, outbox, state ){
+            if( err ){
+              alert( err.message )
+              return
+            }
+            setInbox( state.inbox )
+            setFloor( state.memory )
+            setOutbox( outbox )
+          })
+        }
+        
+        initLevelSelect()
       })()
     </script>  
   </body>
