@@ -31,6 +31,10 @@
         flex-grow: 1;
       }
       
+      #floor, #code {
+        flex-grow: 3;
+      }
+      
       #code textarea {
         width: 100%;
         height: 100%;
@@ -39,6 +43,57 @@
       
       menu {
         padding-left: 0;
+      }
+      
+      .conveyor {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+      
+      .conveyor .tile {
+        margin: 0.5em 0;
+      }
+      
+      .tile {
+        font-size: 1.25rem;
+        width: 3em;
+        height: 3em;
+        line-height: 3em;
+        text-align: center;
+        font-weight: 600;
+      }
+      
+      .tile.string {
+        background: #999;
+        color: #fff;
+      }
+      
+      .tile.number {
+        background: #ddd;
+        color: #222;
+      }
+      
+      .floorRow {
+        display: flex;
+        flex-direction: row;
+        font-size: 1.25rem;
+      }
+      
+      .floorTile {
+        background: #eee;
+        display: flex;
+        flex-direction: column;
+        width: 4em;
+        height: 4em;
+        padding: 0 0.5em;
+      }
+      
+      .floorTile span {
+        display: block;
+        text-align: center;
+        line-height: 1.25;
+        font-size: 0.8rem;
       }
     </style>
   </head>
@@ -52,20 +107,21 @@
     </header>
     <menu>
       <label>Setup: <select id="level"></select></label>
-      <button id="run">Run</button>
+      <button id="reset" title="Reset"><i class="fa fa-stop"></i></button>
+      <button id="run" title="Run"><i class="fa fa-play"></i></button>
     </menu>
     <main>
       <section id="inbox">
-        <h1>Inbox</h1>
-        <ul></ul>
+        <h1><i class="fa fa-hand-o-up"></i> In</h1>
+        <ul class="conveyor"></ul>
       </section>
       <section id="floor">
         <h1>Floor</h1>
-        <ol start="0"></ol>
+        <div></div>
       </section>
       <section id="outbox">
-        <h1>Outbox</h1>
-        <ul></ul>
+        <h1>Out <i class="fa fa-hand-o-down"></i></h1>
+        <ul class="conveyor"></ul>
       </section>
       <section id="code">
         <h1>Code</h1>
@@ -85,16 +141,25 @@
         
         var inbox = document.querySelector( '#inbox > ul' )
         var outbox = document.querySelector( '#outbox > ul' )
-        var floor = document.querySelector( '#floor > ol' )
+        var floor = document.querySelector( '#floor > div' )
         var code = document.querySelector( '#code > textarea' )
         
         var levelSelect = document.getElementById( 'level' )
         var run = document.getElementById( 'run' )
+        var resetProgram = document.getElementById( 'reset' )
+        
+        function reset(){
+          inbox.innerHTML = ''
+          floor.innerHTML = ''
+          outbox.innerHTML = ''
+        }
         
         function initLevelSelect(){
           levelSelect.innerHTML = ''
           
           hrm.levelData.forEach( function( level, i ){
+            if( level.cutscene ) return;
+            
             var option = document.createElement( 'option' )
             
             option.value = level.number
@@ -103,6 +168,39 @@
             
             levelSelect.add( option, null )
           })
+          
+          levelSelect.addEventListener( 'change', function( event ) {
+            levelSelectChange()
+          }, false )
+          
+          levelSelectChange()
+        }
+        
+        function floorFromLevelData( level ){
+          if( !level.floor ) return []
+          
+          var floor = []
+          var size = level.floor.columns * level.floor.rows
+          
+          for( var i = 0; i < size; i++ ){
+            floor[ i ] = level.floor.tiles ? level.floor.tiles[ i ] : null
+          }          
+          
+          return floor
+        }
+        
+        function levelSelectChange(){
+          reset()
+          
+          var levelNumber = Number( levelSelect[ levelSelect.selectedIndex ].value )
+          var level = loadLevel( levelNumber )
+          var example = level.examples[ 0 ]          
+          var floor = floorFromLevelData( level )
+          var rows = level.floor && level.floor.rows ? level.floor.rows : 0
+          var columns = level.floor && level.floor.columns ? level.floor.columns : 0
+          
+          setInbox( example.inbox )
+          setFloor( floor, columns, rows )          
         }
         
         function setInbox( values ){
@@ -111,7 +209,8 @@
           values.forEach( function( value ){
             var li = document.createElement( 'li' )
             
-            li.textContent = value
+            li.textContent = value            
+            li.className = 'tile ' + typeof value
             
             inbox.appendChild( li )
           })
@@ -124,31 +223,53 @@
             var li = document.createElement( 'li' )
             
             li.textContent = value
+            li.className = 'tile ' + typeof value
             
             outbox.appendChild( li )
           })
         }
         
-        function setFloor( values ){
+        function setFloor( values, columns, rows ){
           floor.innerHTML = ''
           
-          var keys = Object.keys( values ).map( function( n ){ 
-            return Number( n ) 
-          })
+          for( var y = 0; y < rows; y++ ){
+            var row = document.createElement( 'div' )
             
-          var max = Math.max.apply( null, keys )
-          
-          for( var i = 0; i <= max; i++ ){
-            var li = document.createElement( 'li' )
+            row.className = 'floorRow'
             
-            var value = values[ i ]
+            for( var x = 0; x < columns; x++ ){
+              var i = y * columns + x
+              
+              var value = values[ i ]
+              
+              var floorTile = document.createElement( 'div' )
+              
+              floorTile.className = 'floorTile'
+              
+              var tile = document.createElement( 'div' )
+                
+              if( value === 0 || value ){
+                tile.textContent = value            
+                tile.className = 'tile ' + typeof value
+              } else {
+                tile.className = 'tile'
+              }
+                
+              floorTile.appendChild( tile )
+              
+              var span = document.createElement( 'span' )
+              
+              span.textContent = i
+
+              floorTile.appendChild( span )
+              
+              row.appendChild( floorTile )              
+            }
             
-            li.textContent = value === 0 ? value : value ? value : ''
-            
-            floor.appendChild( li )
+            floor.appendChild( row )
           }
         }
-        
+
         function loadLevel( n ){
           var level = hrm.levelData.find( function( level ){
             return level.number === n
@@ -159,14 +280,16 @@
         
         run.onclick = function(){
           var levelNumber = Number( levelSelect[ levelSelect.selectedIndex ].value )
-          
-          var source = code.value
           var level = loadLevel( levelNumber )
           var example = level.examples[ 0 ]          
-          var floor = level.floor || {}
-          
+          var floor = floorFromLevelData( level )
+          var rows = level.floor && level.floor.rows ? level.floor.rows : 0
+          var columns = level.floor && level.floor.columns ? level.floor.columns : 0
+
           setInbox( example.inbox )
-          setFloor( floor )
+          setFloor( floor, columns, rows )
+          
+          var source = code.value
           
           var program;
           
@@ -185,10 +308,12 @@
               return
             }
             setInbox( state.inbox )
-            setFloor( state.memory )
+            setFloor( state.memory, columns, rows )
             setOutbox( outbox )
           })
         }
+        
+        resetProgram.onclick = levelSelectChange
         
         initLevelSelect()
       })()
