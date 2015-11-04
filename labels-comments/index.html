@@ -13,7 +13,7 @@
         font-size: 2.5rem;
       }
       
-      #preview {
+      #preview, #decodeTo {
         background: #f0f0f0;
       }
     </style>
@@ -40,9 +40,9 @@
             </p>
           </li>
           <li>
-            <a href="../label-comment-maker" class="current">Label/Comment Maker</a>
+            <a href="../labels-comments" class="current">Labels/Comments</a>
             <p>
-              Create label/comment images from text
+              Create label/comment images from text, or decode them
             </p>
           </li>
         </ul>
@@ -95,6 +95,34 @@ World!</textarea>
         </div>
         <button id="generate">Generate</button>
       </section>
+      <section>
+        <h1>Label/Comment Decoder</h1>
+        <p>
+          Decodes labels or comments from the game and displays them as SVG
+        </p>      
+        <div class="row">
+          <div>
+            <label for="decodeFrom">Text</label>
+            <div class="aspect aspect-3-1">
+              <div class="content">
+                <textarea id="decodeFrom" wrap="off">eJxLZ2BgOMDswH2AucAPyGToEXHg7hGBsA8w39DpEbmhA2Lvky/w2yfvwP1Ry4G7y4BH5qPWDZ0I1Rs6
+XQYQtXutC/z2Wjtwf3C7oaMc5MCtHAQRD429odORATFjd7ED99s6B+72Fh6Z9pYltm/rCvx2F4OwAzdI
+fmd/gd/OfgfuN7McuNsW8Mi8mXVDJ3jqDZ22BRCzdqwu8NuxmkcmaKMD9+ttDtwte3hkWvbA5G7otOyB
+2LP9uAO37IUCv+YbDtwvHxT4+b+EmB+WnHK1Jrvw+rKCf2dA/FVViyo2F19Lv5DxNYov9nKMbMDH7Bdu
+6f03Xd9tbPI2ueoRIv3qR+L+L9E5xh/tyo89mFb37Ojlhq+rQXonF9+v2lMpVHG5oaJBoPnCFOdG91VR
+1eHblUoytmXmdS/zyl3drVycVw1SOycgr7MkPKr+Vnxps0iq0uTgtGurohJqDjwJbz86J2Dino8+7xaD
+1IDUboosWASieSrPTmcYBaOADgAAyvOhOw;</textarea>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label>SVG</label>
+            <div id="decodeTo">
+            </div>  
+          </div>
+        </div>  
+        <button id="decode">Decode</button>        
+      </section>  
     </main>
     <footer>
       <p>
@@ -106,6 +134,15 @@ World!</textarea>
     <script>
       (function(){
         'use strict'
+        
+        function decode(){
+          var decodeFrom = document.getElementById( 'decodeFrom' )
+          var decodeTo = document.getElementById( 'decodeTo' )
+          
+          var canvas = hrm.draw.Canvas( decodeFrom.value )
+          
+          decodeTo.innerHTML = canvas.toSvg()          
+        }
         
         function generate(){
           var input = document.getElementById( 'input' )
@@ -127,8 +164,13 @@ World!</textarea>
         document.getElementById( 'generate' ).addEventListener( 'click', function( event ) {
           generate()
         }, false )
+        
+        document.getElementById( 'decode' ).addEventListener( 'click', function( event ) {
+          decode()
+        }, false )
   
         generate()
+        decode()
       })()
     </script>  
   </body>
