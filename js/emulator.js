@@ -375,7 +375,7 @@
         }
         
         var s = line[ 0 ]
-        while( s.length < 8 ){
+        while( s.length < 9 ){
           s += ' '
         }
         
