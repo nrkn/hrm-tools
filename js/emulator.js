@@ -112,11 +112,14 @@
     
     view.steps( steps.length - 1 )
     stepIndex = 0
+    
+    displayStep( stepIndex )    
   }
   
   function step(){
     if( !cpu ){
-      init()
+      init()     
+      return
     }
     
     if( stepIndex + 1 < steps.length ){
