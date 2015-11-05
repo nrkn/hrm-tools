@@ -46,7 +46,6 @@ main > section {
 }
 
 #code textarea {
-  width: 50em;
   height: 100%;
   resize: none;
 }
