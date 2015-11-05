@@ -172,7 +172,11 @@ button {
   color: #fff;
   cursor: pointer;
   font-size: 1.25rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+}
+
+button:disabled {
+  background: #ccc;
 }
 
 @media ( min-width: 600px ) {

@@ -1,0 +1,8 @@
+#input {
+  text-transform: uppercase;
+  font-size: 2.5rem;
+}
+
+#preview, #decodeTo {
+  background: #f0f0f0;
+}

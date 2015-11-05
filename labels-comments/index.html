@@ -7,16 +7,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" />
     <link rel="stylesheet" href="../css/main.css" />
-    <style>      
-      #input {
-        text-transform: uppercase;
-        font-size: 2.5rem;
-      }
-      
-      #preview, #decodeTo {
-        background: #f0f0f0;
-      }
-    </style>
+    <link rel="stylesheet" href="../css/labels-comments.css" />
   </head>
   <body class="document">
     <header>
@@ -131,47 +122,6 @@ fmd/gd/OfgfuN7McuNsW8Mi8mXVDJ3jqDZ22BRCzdqwu8NuxmkcmaKMD9+ttDtwte3hkWvbA5G7otOyB
     </footer>
     <script src="../js/polyfills.js"></script>
     <script src="../js/hrm-web.js"></script>
-    <script>
-      (function(){
-        'use strict'
-        
-        function decode(){
-          var decodeFrom = document.getElementById( 'decodeFrom' )
-          var decodeTo = document.getElementById( 'decodeTo' )
-          
-          var canvas = hrm.draw.Canvas( decodeFrom.value )
-          
-          decodeTo.innerHTML = canvas.toSvg()          
-        }
-        
-        function generate(){
-          var input = document.getElementById( 'input' )
-          var image = document.getElementById( 'image' )
-          var asm = document.getElementById( 'asm' )
-          var preview = document.getElementById( 'preview' )
-          
-          var canvas = hrm.draw.Canvas()
-          
-          canvas.text( input.value )
-          
-          image.textContent = canvas.toImage()
-          
-          asm.textContent = canvas.toAsm()
-          
-          preview.innerHTML = canvas.toSvg()
-        }   
-
-        document.getElementById( 'generate' ).addEventListener( 'click', function( event ) {
-          generate()
-        }, false )
-        
-        document.getElementById( 'decode' ).addEventListener( 'click', function( event ) {
-          decode()
-        }, false )
-  
-        generate()
-        decode()
-      })()
-    </script>  
+    <script src="../js/labels-comments.js"></script>
   </body>
 </html>

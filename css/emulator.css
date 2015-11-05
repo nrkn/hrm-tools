@@ -1,0 +1,131 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+main > section {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+#controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#controls > * {
+  margin-right: 0.5rem;
+}
+
+#stepSelectContainer {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+#stepSelect, #stepSelect input {
+  width: 100%;
+}
+
+#floor, #code {
+  flex-grow: 2;
+}
+
+#code textarea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+}
+
+#code pre {
+  width: 100%;
+  height: 100%;  
+}
+
+#code pre .current {
+  background: #39f;
+  color: #fff;
+}
+
+menu {
+  padding-left: 0;
+}
+
+.conveyor {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.conveyor .tile {
+  margin: 0.5em 0;
+}
+
+#inbox {
+  margin-right: 1rem;
+}
+
+#outbox {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+#hand .tile {
+  display: inline-block;
+}
+
+.tile {
+  background: #f6f6f6;
+  font-size: 1rem;
+  width: 3em;
+  height: 3em;
+  line-height: 3em;
+  text-align: center;
+  font-weight: 600;
+}
+
+.tile.string {
+  background: #999;
+  color: #fff;
+}
+
+.tile.number {
+  background: #ddd;
+  color: #222;
+}
+
+.floorRow {
+  display: flex;
+  flex-direction: row;
+  font-size: 1rem;
+}
+
+.floorTile {
+  background: #eee;
+  display: flex;
+  flex-direction: column;
+  width: 5em;
+  height: 5em;
+  padding: 0 1em;
+}
+
+.floorTile span {
+  display: block;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 0.8rem;
+}

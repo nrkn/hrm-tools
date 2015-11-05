@@ -7,95 +7,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" />
     <link rel="stylesheet" href="../css/main.css" />
-    <style>     
-      html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-      }
-      
-      body {
-        display: flex;
-        flex-direction: column;
-      }
-      
-      main {
-        display: flex;
-        flex-direction: row;
-        flex-grow: 1;
-      }
-      
-      main > section {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-      }
-      
-      #floor, #code {
-        flex-grow: 2;
-      }
-      
-      #code textarea {
-        width: 100%;
-        height: 100%;
-        resize: none;
-      }
-      
-      menu {
-        padding-left: 0;
-      }
-      
-      .conveyor {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-      }
-      
-      .conveyor .tile {
-        margin: 0.5em 0;
-      }
-      
-      .tile {
-        font-size: 1rem;
-        width: 3em;
-        height: 3em;
-        line-height: 3em;
-        text-align: center;
-        font-weight: 600;
-      }
-      
-      .tile.string {
-        background: #999;
-        color: #fff;
-      }
-      
-      .tile.number {
-        background: #ddd;
-        color: #222;
-      }
-      
-      .floorRow {
-        display: flex;
-        flex-direction: row;
-        font-size: 1rem;
-      }
-      
-      .floorTile {
-        background: #eee;
-        display: flex;
-        flex-direction: column;
-        width: 5em;
-        height: 5em;
-        padding: 0 1em;
-      }
-      
-      .floorTile span {
-        display: block;
-        text-align: center;
-        line-height: 1.25;
-        font-size: 0.8rem;
-      }
-    </style>
+    <link rel="stylesheet" href="../css/emulator.css" />
   </head>
   <body>
     <header>
@@ -105,19 +17,30 @@
       </h1>
       <h2>Emulator</h2>
     </header>
-    <menu>
+    <menu id="controls">
       <label>Setup: <select id="level"></select></label>
-      <button id="reset" title="Reset"><i class="fa fa-stop"></i></button>
+      <button id="stop" title="Stop" disabled><i class="fa fa-stop"></i></button>
+      <button id="back" title="Step Back" disabled><i class="fa fa-step-backward"></i></button>
       <button id="run" title="Run"><i class="fa fa-play"></i></button>
+      <button id="step" title="Step" disabled><i class="fa fa-step-forward"></i></button>
+      <div id="stepSelectContainer">
+        <label id="stepSelect">Step: <span></span> <input type="range" value="0" /></label>
+      </div>
     </menu>
     <main>
       <section id="inbox">
         <h1><i class="fa fa-hand-o-up"></i> In</h1>
         <ul class="conveyor"></ul>
       </section>
-      <section id="floor">
-        <h1>Floor</h1>
-        <div></div>
+      <section id="hand">        
+        <h1><i class="fa fa-hand-paper-o"></i> Hand</h1>
+        <span></span>
+      </section>
+      <section id="floor">        
+        <div id="floorTiles">
+          <h1>Floor</h1>
+          <div id="tiles"></div>
+        </div>
       </section>
       <section id="outbox">
         <h1>Out <i class="fa fa-hand-o-down"></i></h1>
@@ -126,6 +49,7 @@
       <section id="code">
         <h1>Code</h1>
         <textarea wrap="off"></textarea>
+        <pre></pre>
       </section>
     </main>
     <footer>
@@ -135,188 +59,6 @@
     </footer>
     <script src="../js/polyfills.js"></script>
     <script src="../js/hrm-web.js"></script>
-    <script>
-      (function(){
-        'use strict'
-        
-        var inbox = document.querySelector( '#inbox > ul' )
-        var outbox = document.querySelector( '#outbox > ul' )
-        var floor = document.querySelector( '#floor > div' )
-        var code = document.querySelector( '#code > textarea' )
-        
-        var levelSelect = document.getElementById( 'level' )
-        var run = document.getElementById( 'run' )
-        var resetProgram = document.getElementById( 'reset' )
-        
-        function reset(){
-          inbox.innerHTML = ''
-          floor.innerHTML = ''
-          outbox.innerHTML = ''
-        }
-        
-        function initLevelSelect(){
-          levelSelect.innerHTML = ''
-          
-          hrm.levelData.forEach( function( level, i ){
-            if( level.cutscene ) return;
-            
-            var option = document.createElement( 'option' )
-            
-            option.value = level.number
-            option.text = level.number + '. ' + level.name
-            option.selected = level.number === 1
-            
-            levelSelect.add( option, null )
-          })
-          
-          levelSelect.addEventListener( 'change', function( event ) {
-            levelSelectChange()
-          }, false )
-          
-          levelSelectChange()
-        }
-        
-        function floorFromLevelData( level ){
-          if( !level.floor ) return []
-          
-          var floor = []
-          var size = level.floor.columns * level.floor.rows
-          
-          for( var i = 0; i < size; i++ ){
-            floor[ i ] = level.floor.tiles ? level.floor.tiles[ i ] : null
-          }          
-          
-          return floor
-        }
-        
-        function levelSelectChange(){
-          reset()
-          
-          var levelNumber = Number( levelSelect[ levelSelect.selectedIndex ].value )
-          var level = loadLevel( levelNumber )
-          var example = level.examples[ 0 ]          
-          var floor = floorFromLevelData( level )
-          var rows = level.floor && level.floor.rows ? level.floor.rows : 0
-          var columns = level.floor && level.floor.columns ? level.floor.columns : 0
-          
-          setInbox( example.inbox )
-          setFloor( floor, columns, rows )          
-        }
-        
-        function setInbox( values ){
-          inbox.innerHTML = ''
-          
-          values.forEach( function( value ){
-            var li = document.createElement( 'li' )
-            
-            li.textContent = value            
-            li.className = 'tile ' + typeof value
-            
-            inbox.appendChild( li )
-          })
-        }
-        
-        function setOutbox( values ){
-          outbox.innerHTML = ''
-          
-          values.slice().reverse().forEach( function( value ){
-            var li = document.createElement( 'li' )
-            
-            li.textContent = value
-            li.className = 'tile ' + typeof value
-            
-            outbox.appendChild( li )
-          })
-        }
-        
-        function setFloor( values, columns, rows ){
-          floor.innerHTML = ''
-          
-          for( var y = 0; y < rows; y++ ){
-            var row = document.createElement( 'div' )
-            
-            row.className = 'floorRow'
-            
-            for( var x = 0; x < columns; x++ ){
-              var i = y * columns + x
-              
-              var value = values[ i ]
-              
-              var floorTile = document.createElement( 'div' )
-              
-              floorTile.className = 'floorTile'
-              
-              var tile = document.createElement( 'div' )
-                
-              if( value === 0 || value ){
-                tile.textContent = value            
-                tile.className = 'tile ' + typeof value
-              } else {
-                tile.className = 'tile'
-              }
-                
-              floorTile.appendChild( tile )
-              
-              var span = document.createElement( 'span' )
-              
-              span.textContent = i
-
-              floorTile.appendChild( span )
-              
-              row.appendChild( floorTile )              
-            }
-            
-            floor.appendChild( row )
-          }
-        }
-
-        function loadLevel( n ){
-          var level = hrm.levelData.find( function( level ){
-            return level.number === n
-          })
-          
-          return level          
-        }
-        
-        run.onclick = function(){
-          var levelNumber = Number( levelSelect[ levelSelect.selectedIndex ].value )
-          var level = loadLevel( levelNumber )
-          var example = level.examples[ 0 ]          
-          var floor = floorFromLevelData( level )
-          var rows = level.floor && level.floor.rows ? level.floor.rows : 0
-          var columns = level.floor && level.floor.columns ? level.floor.columns : 0
-
-          setInbox( example.inbox )
-          setFloor( floor, columns, rows )
-          
-          var source = code.value
-          
-          var program;
-          
-          try{
-            program = hrm.parser( source )
-          } catch( e ){
-            alert( e )
-            return
-          }
-          
-          var cpu = hrm.cpu( program, example.inbox, floor || {} )
-          
-          cpu.run( function( err, outbox, state ){
-            if( err ){
-              alert( err.message )
-              return
-            }
-            setInbox( state.inbox )
-            setFloor( state.memory, columns, rows )
-            setOutbox( outbox )
-          })
-        }
-        
-        resetProgram.onclick = levelSelectChange
-        
-        initLevelSelect()
-      })()
-    </script>  
+    <script src="../js/emulator.js"></script>
   </body>
 </html>
