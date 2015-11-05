@@ -159,8 +159,9 @@
     var dom = {
       inbox: document.querySelector( '#inbox > ul' ),
       outbox: document.querySelector( '#outbox > ul' ),
+      floor: document.querySelector( '#floor' ),
       floorTiles: document.querySelector( '#floor #floorTiles' ),
-      floor: document.querySelector( '#floor #tiles' ),
+      tiles: document.querySelector( '#floor #tiles' ),
       code: document.querySelector( '#code > textarea' ),
       program: document.querySelector( '#code > pre' ),
       level: document.getElementById( 'level' ),
@@ -209,7 +210,7 @@
     function reset(){
       dom.inbox.innerHTML = ''
       dom.outbox.innerHTML = ''
-      dom.floor.innerHTML = ''
+      dom.tiles.innerHTML = ''
     }  
     
     var setState = {}
@@ -302,12 +303,12 @@
     
     function setFloor( floor ){
       if( floor.rows === 0 || floor.columns === 0 ){
-        dom.floorTiles.hidden = true
+        dom.floor.className = 'hidden'
         return
       }
       
-      dom.floorTiles.hidden = false
-      dom.floor.innerHTML = ''
+      dom.floor.className = ''
+      dom.tiles.innerHTML = ''
       
       for( var y = 0; y < floor.rows; y++ ){
         var row = document.createElement( 'div' )
@@ -343,7 +344,7 @@
           row.appendChild( floorTile )              
         }
         
-        dom.floor.appendChild( row )
+        dom.tiles.appendChild( row )
       }
     }  
     

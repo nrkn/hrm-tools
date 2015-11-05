@@ -18,7 +18,7 @@ main {
 main > section {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  margin: 0 1rem;
 }
 
 #controls {
@@ -41,12 +41,12 @@ main > section {
   width: 100%;
 }
 
-#floor, #code {
-  flex-grow: 2;
+#floor.hidden {
+  display: none;
 }
 
 #code textarea {
-  width: 100%;
+  width: 50em;
   height: 100%;
   resize: none;
 }
@@ -72,16 +72,7 @@ menu {
 }
 
 .conveyor .tile {
-  margin: 0.5em 0;
-}
-
-#inbox {
-  margin-right: 1rem;
-}
-
-#outbox {
-  margin-left: 1rem;
-  margin-right: 1rem;
+  margin-bottom: 0.5em;
 }
 
 #hand .tile {
