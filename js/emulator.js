@@ -367,6 +367,8 @@
       dom.program.innerHTML = ''
       
       value.forEach( function( line, i ){
+        var p = lineNumber === i ? '>' : ' '
+        
         var n = String( i )
         while( n.length < 3 ){
           n = ' ' + n
@@ -377,7 +379,7 @@
           s += ' '
         }
         
-        var l = n + ' ' + s
+        var l = p + ' ' + n + ' ' + s
         
         if( line.length > 1 ){
           var arg = line[ 1 ]
@@ -395,9 +397,11 @@
         
         span.textContent = l
         
+        /*
         if( lineNumber === i ){
           span.className = 'current'
         }
+        */
         
         dom.program.appendChild( span )
       })
