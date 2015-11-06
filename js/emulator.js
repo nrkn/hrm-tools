@@ -437,8 +437,6 @@
       dom.editSetup.hidden = true
       dom.cancelSetup.hidden = true
       dom.saveSetup.hidden = true
-      dom.editInbox.hidden = true
-      dom.editFloor.hidden = true      
     }
     
     setState[ states.running ] = function(){
@@ -456,9 +454,7 @@
       
       dom.editSetup.hidden = true
       dom.cancelSetup.hidden = true
-      dom.saveSetup.hidden = true
-      dom.editInbox.hidden = true
-      dom.editFloor.hidden = true      
+      dom.saveSetup.hidden = true    
     }    
     
     setState[ states.ended ] = function(){
@@ -476,9 +472,7 @@
       
       dom.editSetup.hidden = true
       dom.cancelSetup.hidden = true
-      dom.saveSetup.hidden = true
-      dom.editInbox.hidden = true
-      dom.editFloor.hidden = true      
+      dom.saveSetup.hidden = true   
     }
     
     function setInbox( values ){
