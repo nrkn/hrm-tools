@@ -26,7 +26,7 @@ main > section {
 
 .conveyor, #tiles {
   overflow-y: auto;
-  padding-right: 17px;
+  padding-right: 1.25em;
 }
 
 main h1, main h2, main h3, main h4, main h5, main h6 {
@@ -83,7 +83,7 @@ menu {
   padding-left: 0;
   margin: 0;
   font-size: 1rem;
-  min-width: 3em;
+  min-width: 5rem;
 }
 
 .conveyor .tile {
