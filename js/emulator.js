@@ -291,7 +291,7 @@
         
         var inboxData = dom.editInbox.value.split( ',' )
           .map( function( item ){
-            return item.trim().toUpperCase()
+            return item.trim().toUpperCase().replace( /"/g, '' )
           })
           .filter( function( item ){
             return item !== ''
