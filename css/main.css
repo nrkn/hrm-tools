@@ -21,6 +21,12 @@ header h1 > a {
   float: right;
 }
 
+#github {
+  color: #0080ff;
+  text-decoration: none;  
+  margin-left: auto;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   margin-bottom: 1rem;
