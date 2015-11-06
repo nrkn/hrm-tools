@@ -26,6 +26,7 @@
       view.state( states.notRunning )
       view.inbox( inbox )
       view.floor( floor )      
+      view.levelName( level )
     }, 0 )
     
     cpu = null
@@ -138,6 +139,7 @@
     var level = Level( view.level() )
     var floor = Floor( level )
     
+    view.levelName( level )
     view.step( stepIndex )
     view.inbox( state.inbox )
     view.floor( {
@@ -163,16 +165,17 @@
       inbox: document.querySelector( '#inbox > ul' ),
       outbox: document.querySelector( '#outbox > ul' ),
       floor: document.querySelector( '#floor' ),
-      floorTiles: document.querySelector( '#floor #floorTiles' ),
       tiles: document.querySelector( '#floor #tiles' ),
       code: document.querySelector( '#code > textarea' ),
       program: document.querySelector( '#code > pre' ),
       level: document.getElementById( 'level' ),
+      levelName: document.getElementById( 'levelName' ),
       run: document.getElementById( 'run' ),
       stop: document.getElementById( 'stop' ),
       back: document.getElementById( 'back' ),
       step: document.getElementById( 'step' ),
       stepControl: document.getElementById( 'stepSelect' ),
+      stepSelectContainer: document.getElementById( 'stepSelectContainer' ),
       stepSelect: document.querySelector( '#stepSelect > input' ),
       stepsCaption: document.querySelector( '#stepSelect > span' ),
       hand: document.getElementById( 'hand' ),
@@ -230,7 +233,7 @@
       
       setHand( null )
       
-      dom.stepControl.hidden = true
+      dom.stepSelectContainer.hidden = true
       dom.stepSelect.min = 0
       dom.stepSelect.max = 1
       dom.stepSelect.value = 0
@@ -246,7 +249,7 @@
       dom.code.hidden = true
       dom.program.hidden = false
       
-      dom.stepControl.hidden = false      
+      dom.stepSelectContainer.hidden = false      
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
     }
     
@@ -260,7 +263,7 @@
       dom.code.hidden = true
       dom.program.hidden = false
       
-      dom.stepControl.hidden = false
+      dom.stepSelectContainer.hidden = false
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
     }    
     
@@ -274,7 +277,7 @@
       dom.code.hidden = true
       dom.program.hidden = false      
       
-      dom.stepControl.hidden = false
+      dom.stepSelectContainer.hidden = false
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
     }
     
@@ -400,15 +403,19 @@
         var span = document.createElement( 'span' )
         
         span.textContent = l
-        
-        /*
-        if( lineNumber === i ){
-          span.className = 'current'
-        }
-        */
-        
+
         dom.program.appendChild( span )
       })
+    }
+    
+    function setLevelName( level ){
+      dom.levelName.innerHTML = ''
+      
+      var name = document.createElement( 'em' )
+      
+      name.textContent = level.number + '. ' + level.name
+      
+      dom.levelName.appendChild( name )
     }
     
     function getOrSetStep( current ){
@@ -432,6 +439,7 @@
     return {
       reset: reset,
       level: getLevel,
+      levelName: setLevelName,
       source: getSource,
       inbox: setInbox,
       outbox: setOutbox,
@@ -442,7 +450,7 @@
         setState[ state ]()
       },
       step: getOrSetStep,
-      steps: setSteps
+      steps: setSteps      
     }  
   }
 

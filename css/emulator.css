@@ -1,65 +1,77 @@
 html, body {
-  width: 100%;
   height: 100%;
+  width: 100%;
   margin: 0;
 }
-
-body {
+ 
+body {  
   display: flex;
   flex-direction: column;
 }
 
 main {
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
   flex-grow: 1;
+  overflow: hidden;
 }
+
 
 main > section {
   display: flex;
-  flex-direction: column;
-  margin: 0 1rem;
+  flex-direction: column;    
+  margin-right: 1em;  
+  min-width: 4rem;
 }
 
-#controls {
+.conveyor, #tiles {
+  overflow-y: auto;
+  padding-right: 17px;
+}
+
+main h1, main h2, main h3, main h4, main h5, main h6 {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+#code {
+  flex: auto;
+}
+
+#code textarea, #code pre {
+  flex: auto;
+}
+
+#code pre {
+  background: #fafafa;
+  margin-top: 0;
+}
+
+#stepSelect {
+  display: flex;
+  flex-direction: row;     
+}
+
+#stepSelect input {
+  flex: auto;
+}
+
+body > header {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: baseline;
 }
 
-#controls > * {
-  margin-right: 0.5rem;
+body > header > h1 {
+  margin-right: 1em;  
 }
 
-#stepSelectContainer {
-  display: flex;
-  flex-direction: row;
-  flex-grow: 1;
-}
-
-#stepSelect, #stepSelect input {
-  width: 100%;
+#levelName {
+  padding-left: 1em;
 }
 
 #floor.hidden {
   display: none;
-}
-
-#code textarea {
-  width: 25em;
-  min-width: 10em;
-  height: 100%;
-  resize: none;
-}
-
-#code pre {
-  width: 100%;
-  height: 100%;  
-}
-
-#code pre .current {
-  background: #39f;
-  color: #fff;
 }
 
 menu {
@@ -70,6 +82,8 @@ menu {
   list-style: none;
   padding-left: 0;
   margin: 0;
+  font-size: 1rem;
+  min-width: 3em;
 }
 
 .conveyor .tile {
@@ -78,11 +92,11 @@ menu {
 
 #hand .tile {
   display: inline-block;
+  font-size: 1rem;
 }
 
 .tile {
   background: #f6f6f6;
-  font-size: 1rem;
   width: 3em;
   height: 3em;
   line-height: 3em;

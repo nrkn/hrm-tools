@@ -16,7 +16,7 @@ header h1 > a {
   text-decoration: none;
 }
 
-header h1 > a:first-child {
+.document header h1 > a:first-child {
   display: inline-block;
   float: right;
 }
