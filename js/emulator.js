@@ -1,5 +1,59 @@
 (function(){
   'use strict'
+
+  var levelData = ([
+    {
+      "number": 0,
+      "name": "Sandbox",      
+      "commands": [ "INBOX", "OUTBOX", "COPYFROM", "COPYTO", "ADD", "SUB", "BUMPUP", "BUMPDN", "JUMP", "JUMPZ", "JUMPN" ],
+      "dereferencing": true,
+      "comments": true,
+      "labels": true,
+      "floor": {
+        "columns": 5,
+        "rows": 5,
+        "tiles": {
+          "24": 0
+        }
+      },
+      "examples": [
+        {
+          "inbox": [ 1, 9, 4 ],
+          "outbox": [ 1, 9, 4 ]
+        }
+      ],
+      "challenge": {
+        "size": 1,
+        "speed": 1
+      }
+    },
+  ]).concat( hrm.levelData )
+  
+  var sandboxInbox = localStorage.getItem( 'Sandbox-inbox' )
+  var sandboxFloor = localStorage.getItem( 'Sandbox-floor' )
+  
+  if( typeof sandboxInbox === 'string' && typeof sandboxFloor === 'string' ){
+    sandboxInbox = JSON.parse( sandboxInbox )
+    sandboxFloor = JSON.parse( sandboxFloor )
+    
+    levelData[ 0 ].examples[ 0 ].inbox = sandboxInbox
+    levelData[ 0 ].floor.tiles = sandboxFloor
+  }
+  
+  var codeEditor = document.querySelector( '#code textarea' )
+  
+  codeEditor.addEventListener( 'input', function(){
+    var level = Level( view.level() )
+    var saveName = level.name + '-source'
+    
+    localStorage.setItem( saveName, codeEditor.value )
+  }, false )
+  
+  function loadLevelSource( level ){
+    var saveName = level.name + '-source'
+    
+    return localStorage.getItem( saveName )    
+  }
   
   var states = {
     notRunning: 0,
@@ -15,10 +69,15 @@
   
   stop()
   
-  function stop(){
+  function stop( event ){
     var level = Level( view.level() )
     var floor = Floor( level )
     var inbox = Inbox( level )
+    
+    var source = loadLevelSource( level )
+    if( typeof source === 'string' ){
+      codeEditor.value = source
+    }    
     
     //if you don't do this, the UI won't always refresh after a try-catch!
     setTimeout( function(){
@@ -179,7 +238,13 @@
       stepSelect: document.querySelector( '#stepSelect > input' ),
       stepsCaption: document.querySelector( '#stepSelect > span' ),
       hand: document.getElementById( 'hand' ),
-      handValue: document.querySelector( '#hand > span' )
+      handValue: document.querySelector( '#hand > span' ),
+      editSetup: document.getElementById( 'editSetup' ),
+      saveSetup: document.getElementById( 'saveSetup' ),
+      cancelSetup: document.getElementById( 'cancelSetup' ),
+      editInbox: document.querySelector( '#editInbox > textarea' ),
+      editFloor: document.querySelector( '#editFloor > textarea' ),
+      main: document.querySelector( 'main' )
     }
     
     function init(){
@@ -190,20 +255,123 @@
       dom.step.addEventListener( 'click', onStep, false )
       dom.stepSelect.addEventListener( 'change', onStepSelect, false )
       
+      dom.editSetup.addEventListener( 'click', function(){
+        editing = true
+        dom.main.className = 'editing'
+        
+        var level = levelData[ 0 ]
+        var inbox = Inbox( level )
+        var floor = Floor( level ).tiles
+        
+        dom.editInbox.value = inbox.join( ', ' )
+        
+        var floorObj = {}
+        
+        floor.forEach( function( value, i ){
+          floorObj[ i ] = value
+        })
+        
+        dom.editFloor.value = JSON.stringify( floorObj, null, 2 )
+        
+        setState[ states.notRunning ]()
+      }, false )      
+      
+      dom.cancelSetup.addEventListener( 'click', function(){
+        editing = false
+        dom.main.className = ''
+        
+        setState[ states.notRunning ]()
+      }, false )      
+      
+      dom.saveSetup.addEventListener( 'click', function(){        
+        
+        
+        var level = levelData[ 0 ]
+        var floor = Floor( level )
+        
+        var inboxData = dom.editInbox.value.split( ',' )
+          .map( function( item ){
+            return item.trim().toUpperCase()
+          })
+          .filter( function( item ){
+            return item !== ''
+          })
+        
+        function isValid( item ){
+          return /^[A-Z]$/.test( item ) || /^\-?[0-9]{1,3}$/.test( item )
+        }
+        
+        var floorValid = true
+        var floorObj
+        
+        try{
+          floorObj = JSON.parse( dom.editFloor.value )
+        } catch( e ){
+          floorValid = false
+        } finally {
+          if( floorValid ){
+            floorValid = typeof floorObj === 'object'
+          }
+
+          if( floorValid ){
+            var keys = Object.keys( floorObj ).map( function( key ){
+              return Number( key )
+            })
+            
+            floorValid = keys.every( function( key ){
+              return typeof key === 'number' && key >= 0 && key <= 24
+            })
+          }
+          
+          if( floorValid ){
+            floorValid = Object.keys( floorObj ).every( function( key ){
+              return isValid( floorObj[ key ] )
+            })
+          }
+          
+          if( !floorValid ){
+            alert( 'Invalid floor data! Expected a valid JSON object where the keys are 0-24 and the values are single upper case characters A-Z or numbers between -999 and 999' )
+            
+            return
+          }
+          
+          if( inboxData.every( isValid ) ){          
+            dom.main.className = ''
+            editing = false
+            setState[ states.notRunning ]()        
+            
+            inboxData = inboxData.map( function( value ){
+              return /^\-?[0-9]{1,3}$/.test( value ) ? Number( value ) : value              
+            })
+            
+            levelData[ 0 ].examples[ 0 ].inbox = inboxData
+            levelData[ 0 ].floor.tiles = floorObj
+            
+            localStorage.setItem( 'Sandbox-inbox', JSON.stringify( inboxData ) )
+            localStorage.setItem( 'Sandbox-floor', JSON.stringify( floorObj ) )
+            
+            setInbox( Inbox( levelData[ 0 ] ) )
+            setFloor( Floor( levelData[ 0 ] ) )
+          } else {
+            alert( 'Invalid inbox data! Expected upper case characters A-Z or numbers between -999 and 999, seperated by commas' )          
+          }             
+        }        
+      }, false )      
+      
       initLevelSelect()
     }
     
     function initLevelSelect(){
       dom.level.innerHTML = ''
       
-      hrm.levelData.forEach( function( level, i ){
+      levelData.forEach( function( level, i ){
         if( level.cutscene ) return;
         
         var option = document.createElement( 'option' )
         
         option.value = level.number
         option.text = level.number + '. ' + level.name
-        option.selected = level.number === 1
+        option.selected = level.number === 0
         
         dom.level.add( option, null )
       })
@@ -219,6 +387,7 @@
       dom.tiles.innerHTML = ''
     }  
     
+    var editing = false
     var setState = {}
     
     setState[ states.notRunning ] = function(){
@@ -237,6 +406,19 @@
       dom.stepSelect.min = 0
       dom.stepSelect.max = 1
       dom.stepSelect.value = 0
+      
+      dom.editSetup.hidden = true
+      dom.cancelSetup.hidden = true
+      dom.saveSetup.hidden = true
+      
+      if( getLevel() === 0 ){
+        if( editing ){
+          dom.cancelSetup.hidden = false
+          dom.saveSetup.hidden = false
+        } else {
+          dom.editSetup.hidden = false
+        }
+      }
     }
     
     setState[ states.started ] = function(){
@@ -251,6 +433,12 @@
       
       dom.stepSelectContainer.hidden = false      
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
+      
+      dom.editSetup.hidden = true
+      dom.cancelSetup.hidden = true
+      dom.saveSetup.hidden = true
+      dom.editInbox.hidden = true
+      dom.editFloor.hidden = true      
     }
     
     setState[ states.running ] = function(){
@@ -265,6 +453,12 @@
       
       dom.stepSelectContainer.hidden = false
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
+      
+      dom.editSetup.hidden = true
+      dom.cancelSetup.hidden = true
+      dom.saveSetup.hidden = true
+      dom.editInbox.hidden = true
+      dom.editFloor.hidden = true      
     }    
     
     setState[ states.ended ] = function(){
@@ -279,6 +473,12 @@
       
       dom.stepSelectContainer.hidden = false
       dom.stepsCaption.textContent = dom.stepSelect.value + '/' + dom.stepSelect.max
+      
+      dom.editSetup.hidden = true
+      dom.cancelSetup.hidden = true
+      dom.saveSetup.hidden = true
+      dom.editInbox.hidden = true
+      dom.editFloor.hidden = true      
     }
     
     function setInbox( values ){
@@ -476,7 +676,7 @@
   }
 
   function Level( n ){
-    return hrm.levelData.find( function( level ){
+    return levelData.find( function( level ){
       return level.number === n
     })
   }

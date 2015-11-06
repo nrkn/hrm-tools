@@ -16,12 +16,37 @@ main {
   overflow: hidden;
 }
 
-
 main > section {
   display: flex;
   flex-direction: column;    
   margin-right: 1em;  
   min-width: 4rem;
+}
+
+#editInbox {
+  display: none;
+}
+
+#editFloor {
+  display: none;
+}
+
+main.editing > section {
+  display: none;
+}
+
+main.editing #editInbox {
+  display: flex;
+  flex-grow: 1;
+}
+
+main.editing #editFloor {
+  display: flex;
+  flex-grow: 1;
+}
+
+main.editing textarea {
+  flex: auto;
 }
 
 .conveyor, #tiles {
@@ -68,6 +93,7 @@ body > header > h1 {
 
 #levelName {
   padding-left: 1em;
+  color: #666;
 }
 
 #floor.hidden {

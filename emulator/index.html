@@ -14,16 +14,28 @@
       <h1>        
         <a href="../">hrm-tools</a>
       </h1>
-      <h2>Emulator <span id="levelName"></span></h2>
-      <a id="github" href="https://github.com/nrkn/hrm-tools"><i class="fa fa-github fa-3x"></i></a>
+      <h2>Emulator</h2>
+      <h3 id="levelName"></h3>
+      <a id="github" href="https://github.com/nrkn/hrm-tools"><i class="fa fa-github fa-2x"></i></a>
     </header>
     <menu>
       <label>Setup: <select id="level"></select></label>
+      <button id="editSetup" hidden>Edit</button>
+      <button id="saveSetup" hidden>Save</button>
+      <button id="cancelSetup" hidden>Cancel</button>
     </menu>
     <main>
+      <section id="editInbox">
+        <h1><i class="fa fa-hand-o-up" title="In"></i></h1>
+        <textarea></textarea>      
+      </section>
+      <section id="editFloor">
+        <h1>Floor</h1>
+        <textarea></textarea>      
+      </section>
       <section id="inbox">
         <h1><i class="fa fa-hand-o-up" title="In"></i></h1>
-        <ul class="conveyor"></ul>
+        <ul class="conveyor"></ul>        
       </section>
       <section id="hand">        
         <h1><i class="fa fa-hand-paper-o" title="Hand"></i></h1>
@@ -32,6 +44,7 @@
       <section id="floor">        
         <h1>Floor</h1>
         <div id="tiles"></div>
+        <textarea id="editFloor" hidden></textarea>
       </section>
       <section id="outbox">
         <h1><i class="fa fa-hand-o-down" title="Out"></i></h1>
