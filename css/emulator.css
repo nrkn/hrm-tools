@@ -68,9 +68,21 @@ main h1, main h2, main h3, main h4, main h5, main h6 {
 }
 
 #code pre {
-  background: #fafafa;
+  background: #eee;
   margin-top: 0;
   overflow-y: scroll;
+}
+
+#code pre .marker, #code pre .lineNumber {
+  color: #666;
+}
+
+#code pre .arg, #code pre .current span {
+  font-weight: 500;
+}
+
+#code pre .current span {
+  color: #06c;  
 }
 
 #stepSelect {
@@ -124,11 +136,12 @@ menu {
 
 .tile {
   background: #f6f6f6;
+  font-family: "Roboto Mono", monospace;
+  font-weight: 500;
   width: 3em;
   height: 3em;
   line-height: 3em;
   text-align: center;
-  font-weight: 600;
 }
 
 .tile.string {

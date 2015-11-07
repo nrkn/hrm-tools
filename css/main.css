@@ -2,9 +2,13 @@ html {
   box-sizing: border-box;
   background: #fefefe;
   color: #222;
-  font-family: "Open Sans", sans-serif; 
+  font-family: "Roboto", sans-serif; 
   font-size: 16px;
   padding: 0 1rem;    
+}
+
+pre, textarea {
+  font-family: "Roboto Mono", monospace;
 }
 
 *, *:before, *:after {
@@ -28,7 +32,7 @@ header h1 > a {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 1rem;
 }
 
@@ -60,6 +64,10 @@ nav ul > li > p {
   margin: 0.5rem 0;
 }
 
+nav ul > li > a {
+  font-weight: 500;
+}
+
 nav ul > li > a.current {
   color: #222;
   text-decoration: none;
@@ -70,6 +78,15 @@ nav ul > li > a.current {
   padding: 2rem 0;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
+}
+
+.document main p, .document main ul, .document main cite {
+  font-family: "Roboto Slab", serif;
+}
+
+.document main p strong, .document main ul strong {
+  color: #444;
+  font-weight: 700;
 }
 
 footer {
@@ -104,9 +121,8 @@ blockquote cite {
 }
 
 strong {
-  font-weight: 600;
+  font-weight: 500;
 }
-
 
 textarea {
   border: 1px solid #bbb;  
@@ -116,6 +132,7 @@ textarea {
   width: 65rem;  
   max-width: 100%;
   margin: auto;
+  overflow-y: scroll;
 }
 
 .tabular-list {

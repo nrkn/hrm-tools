@@ -564,42 +564,68 @@
       dom.handValue.appendChild( tile )
     }      
     
-    function setProgram( value, lineNumber ){
+    function setProgram( program, lineNumber ){
       dom.program.innerHTML = ''
       
-      value.forEach( function( line, i ){
-        var p = lineNumber === i ? '>' : ' '
+      program.forEach( function( line, i ){
+        var div = document.createElement( 'div' )
         
-        var n = String( i )
-        while( n.length < 3 ){
-          n = ' ' + n
+        var marker = '  '
+        var className = 'line-' + i
+        
+        if( lineNumber === i ){
+          marker = '> '
+          className += ' current'          
         }
         
-        var s = line[ 0 ]
-        while( s.length < 9 ){
-          s += ' '
-        }
+        div.className = className
         
-        var l = p + ' ' + n + ' ' + s
+        var currentLine = String( i )
+        while( currentLine.length < 3 ){
+          currentLine = ' ' + currentLine
+        }
+        currentLine += '  '
+        
+        var instr = line[ 0 ]
+        while( instr.length < 10 ){
+          instr += ' '
+        }
+       
+        var ms = document.createElement( 'span' )
+        ms.textContent = marker
+        ms.className = 'marker'
+        div.appendChild( ms )
+        
+        var ls = document.createElement( 'span' )
+        ls.textContent = currentLine
+        ls.className = 'lineNumber'
+        div.appendChild( ls )
+        
+        var ins = document.createElement( 'span' )
+        ins.textContent = instr
+        ins.className = 'instr'
+        div.appendChild( ins )
         
         if( line.length > 1 ){
-          var arg = line[ 1 ]
-          while( arg.length < 5 ){
-            arg += ' '
+          var arg = String( line[ 1 ] )
+          while( arg.length < 3 ){
+            arg = ' ' + arg
           }
-          l += arg
-        } else {
-          l += '     '
-        }
-        
-        l += '\n'
-        
-        var span = document.createElement( 'span' )
-        
-        span.textContent = l
+          
+          var ars = document.createElement( 'span' )
+          ars.textContent = arg
+          ars.className = 'arg'
+          div.appendChild( ars )
+        } 
 
-        dom.program.appendChild( span )
+        dom.program.appendChild( div )
       })
+      
+      highlight( program, lineNumber )
+    }
+    
+    function highlight( program, lineNumber ){
+      
     }
     
     function setLevelName( level ){
