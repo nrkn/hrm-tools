@@ -621,6 +621,14 @@
         dom.program.appendChild( div )
       })
       
+      //if not in view
+      
+      var targetIndex = lineNumber === 0 ? lineNumber : lineNumber - 1
+      var target = document.querySelector( '.line-' + targetIndex )
+      
+      if( target.scrollIntoView )
+        target.scrollIntoView()
+      
       highlight( program, lineNumber )
     }
     
