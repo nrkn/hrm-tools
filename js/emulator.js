@@ -186,7 +186,7 @@
     
     if( stepIndex + 1 < steps.length ){
       stepIndex++            
-      if( !noDisplay )
+      if( noDisplay !== true )
         displayStep( stepIndex )
     }
   }
@@ -287,8 +287,6 @@
       }, false )      
       
       dom.saveSetup.addEventListener( 'click', function(){        
-        
-        
         var level = levelData[ 0 ]
         var floor = Floor( level )
         

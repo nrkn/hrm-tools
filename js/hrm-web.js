@@ -12474,7 +12474,7 @@ var ensureValid = function ensureValid(p) {
 
   var inViewport = leftMost >= options.viewBounds.left && topMost >= options.viewBounds.top && width <= options.viewSize.width && height <= options.viewSize.height;
 
-  if (inRange(paths.value()) && inViewport) return paths.floor().value();
+  if (inRange(paths.value()) && inViewport) return paths(filtered).floor().value();
 
   var translated = paths.offset([-leftMost, -topMost]);
 
@@ -13998,101 +13998,248 @@ module.exports=[
 require('./polyfills');
 
 var oneArity = ['INBOX', 'OUTBOX'];
-var twoArity = ['COPYFROM', 'COPYTO', 'ADD', 'SUB', 'BUMPUP', 'BUMPDN', 'JUMP', 'JUMPZ', 'JUMPN', 'COMMENT'];
+var twoArity = ['COPYFROM', 'COPYTO', 'ADD', 'SUB', 'BUMPUP', 'BUMPDN', 'JUMP', 'JUMPZ', 'JUMPN'];
 var jumps = ['JUMP', 'JUMPZ', 'JUMPN'];
 
-var regex = {
-  comment: /^\s*\-\-.*?$/gm,
-  define: /DEFINE\s+(?:COMMENT|LABEL)\s+\d+\s+eJ[-a-z0-9+/=\s]+;/gi,
-  label: /^[a-z][a-z0-9]*:$/i,
-  direct: /^\d+$/,
-  reference: /^\[\d+\]$/,
-  address: /^\d+$|^\[\d+\]$/
+//make list of instructions before putting COMMENT in as comment is not a real instr
+var instr = oneArity.concat(twoArity);
+
+twoArity.push('COMMENT');
+
+var tokens = {
+  comment: {
+    start: /\-\-/,
+    end: /\n/
+  },
+  define: {
+    start: /DEFINE\s+(?:COMMENT|LABEL)\s+\d+\s+eJ[-a-z0-9+/=\s]+;/i,
+    end: /;/
+  },
+  label: {
+    start: /[a-z][a-z0-9]*:/,
+    end: /:/
+  },
+  direct: {
+    start: /\d+/,
+    end: /\s/
+  },
+  reference: {
+    start: /\[\d+\]/,
+    end: /\]/
+  },
+  word: {
+    start: /\w/,
+    end: /\s/
+  },
+  whitespace: {
+    start: /\s/,
+    end: /\s/
+  }
 };
 
-var strip = [regex.comment, regex.define];
+var mappers = {
+  define: function define(node) {
+    var segs = node.value.split(/\s/).filter(function (s) {
+      return s !== '';
+    });
 
-var parse = function parse(source) {
-  var tokens = strip.reduce(function (source, regex) {
-    return source.replace(regex, '');
-  }, source).split(/\s+/).filter(function (token) {
-    return token !== '';
+    return {
+      type: segs[1].toLowerCase() + 's',
+      id: Number(segs[2]),
+      image: segs.slice(3).join('')
+    };
+  },
+  direct: function direct(node) {
+    return Number(node.value);
+  }
+};
+
+var next = function next(str) {
+  var matches = Object.keys(tokens).map(function (key) {
+    return {
+      key: key,
+      match: tokens[key].start.exec(str)
+    };
   });
 
-  var len = tokens.length;
-  var lines = [];
-  var i = 0;
+  var start = matches.find(function (m) {
+    return m.match && m.match.index === 0;
+  });
+  var end = tokens[start.key].end.exec(str);
 
-  while (i < len) {
-    var current = tokens[i];
+  return {
+    key: start.key,
+    start: start.match.index,
+    end: end.index
+  };
+};
 
-    if (regex.label.test(current) || oneArity.includes(current.toUpperCase())) {
-      lines.push([current]);
-      i++;
-    } else if (twoArity.includes(current.toUpperCase())) {
-      lines.push([current, tokens[i + 1]]);
-      i += 2;
-    } else {
-      throw Error('Unexpected token: "' + current + '"');
+var tokenize = function tokenize(str) {
+  var tokens = [];
+
+  str += ' ';
+
+  while (str.length > 0) {
+    var n = next(str);
+    var token = str.substring(n.start, n.end + 1);
+
+    tokens.push({
+      key: n.key,
+      value: token.trim()
+    });
+
+    str = str.substring(n.end + 1);
+  }
+
+  return tokens.filter(function (t) {
+    return t.value !== '';
+  }).map(function (node) {
+    return mappers[node.key] ? {
+      key: node.key,
+      value: mappers[node.key](node)
+    } : node;
+  });
+};
+
+var Ast = function Ast(tokens) {
+  var ast = [];
+  var line = [];
+
+  while (tokens.length > 0) {
+    var token = tokens.shift();
+    var isWord = token.key === 'word';
+    var isInstr = instr.includes(token.value);
+    var current = JSON.parse(JSON.stringify(token));
+
+    if (twoArity.includes(token.value)) {
+      current.arg = tokens.shift();
+    }
+
+    line.push(current);
+
+    if (tokens.length === 0 || isWord && isInstr) {
+      ast.push(line);
+      line = [];
     }
   }
 
-  lines = lines.filter(function (l) {
-    return l[0] !== 'COMMENT';
-  });
-
-  var labels = {};
-  i = 0;
-
-  lines = lines.reduce(function (lines, words) {
-    var first = words[0];
-
-    if (regex.label.test(first)) {
-      var label = first.replace(':', '');
-
-      labels[label] = i;
-
-      return lines;
-    }
-
-    lines.push(words);
-    i++;
-
-    return lines;
-  }, []);
-
-  lines = lines.map(function (words) {
-    var instr = words[0].toUpperCase();
-
-    if (twoArity.includes(instr)) {
-      var arg = words[1];
-
-      if (jumps.includes(instr)) {
-        if (!arg in labels) {
-          throw Error('No such label: ' + arg);
-        }
-
-        arg = labels[arg];
-      }
-
-      if (!regex.address.test(arg)) {
-        throw Error('Invalid address: ' + arg);
-      }
-
-      if (regex.direct.test(arg)) {
-        arg = Number(arg);
-      }
-
-      return [instr, arg];
-    }
-
-    return [instr];
-  });
-
-  return lines;
+  return ast;
 };
 
-module.exports = parse;
+var build = function build(str, callback) {
+  var isCb = typeof callback === 'function';
+
+  var meta = {
+    comments: {},
+    jumps: {},
+    images: {
+      comments: {},
+      labels: {}
+    }
+  };
+
+  var tokens = undefined;
+  try {
+    tokens = tokenize(str);
+  } catch (e) {
+    var error = Error('Unexpected value');
+    if (isCb) {
+      callback(error);
+    } else {
+      throw error;
+    }
+    return;
+  }
+
+  var defines = tokens.filter(function (t) {
+    return t.key === 'define';
+  });
+  var commentDefines = defines.filter(function (t) {
+    return t.value.type === 'comments';
+  });
+  var labelDefines = defines.filter(function (d) {
+    return d.value.type === 'labels';
+  });
+
+  var ast = Ast(tokens.filter(function (t) {
+    return t.key !== 'define';
+  }));
+
+  labelDefines.forEach(function (d) {
+    meta.images.labels[d.value.id] = d.value.image;
+  });
+
+  var program = [];
+
+  var handlers = {
+    word: function word(node, line) {
+      var isInstr = instr.includes(node.value);
+
+      if (isInstr) {
+        if (oneArity.includes(node.value)) {
+          program.push([node.value]);
+        } else {
+          var arg = node.arg.value;
+          program.push([node.value, arg]);
+        }
+      } else if (node.value === 'COMMENT') {
+        if (!Array.isArray(meta.images.comments[line])) meta.images.comments[line] = [];
+
+        var define = commentDefines.find(function (d) {
+          return d.value.id === node.arg.value;
+        });
+
+        meta.images.comments[line].push(define.value.image);
+      }
+    },
+    comment: function comment(node, line) {
+      if (!Array.isArray(meta.comments[line])) meta.comments[line] = [];
+
+      meta.comments[line].push(node.value);
+    },
+    label: function label(node, line) {
+      var name = node.value.replace(':', '');
+
+      meta.jumps[name] = {
+        to: line
+      };
+    }
+  };
+
+  ast.forEach(function (line, i) {
+    return line.forEach(function (node) {
+      return handlers[node.key](node, i);
+    });
+  });
+
+  program.forEach(function (line, i) {
+    var instr = line[0];
+
+    if (jumps.includes(instr)) {
+      var _name = line[1];
+      var to = meta.jumps[_name].to;
+
+      line[1] = to;
+      meta.jumps[_name].from = i;
+    }
+  });
+
+  if (isCb) {
+    callback(null, program, meta);
+  } else {
+    return program;
+  }
+};
+
+module.exports = function (asm, callback) {
+  var isCb = typeof callback === 'function';
+
+  if (isCb) {
+    build(asm, callback);
+  } else {
+    return build(asm);
+  }
+};
 
 },{"./polyfills":56}],56:[function(require,module,exports){
 'use strict';
