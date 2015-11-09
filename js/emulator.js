@@ -107,8 +107,10 @@
     }
     
     for( var i = stepIndex; i < steps.length; i++ ){
-      step()
+      step( true )
     }
+    
+    displayStep( stepIndex )
   }
   
   function init(){
@@ -176,7 +178,7 @@
     displayStep( stepIndex )    
   }
   
-  function step(){
+  function step( noDisplay ){
     if( !cpu ){
       init()     
       return
@@ -184,7 +186,8 @@
     
     if( stepIndex + 1 < steps.length ){
       stepIndex++            
-      displayStep( stepIndex )
+      if( !noDisplay )
+        displayStep( stepIndex )
     }
   }
   
