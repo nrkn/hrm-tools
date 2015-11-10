@@ -775,6 +775,8 @@
         var fromEl = dom.inbox.querySelector( 'li:first-child' )
         var toEl = dom.hand.querySelector( '.tile' )
         
+        if( !fromEl ) return
+        
         fromEl.className += ' from'
         toEl.className += ' to'
       },
