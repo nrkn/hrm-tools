@@ -721,8 +721,10 @@
       })
       
       extraJumps.forEach( function( key ){
+        var jump = meta.jumps[ key ]
+        
         var target = document.createElement( 'div' )
-        target.className = 'target target-' + key
+        target.className = 'target target-' + key + ' line-' + jump.to
         
         target.textContent = key + ':'
 
@@ -734,7 +736,7 @@
       var targetIndex = lineNumber === 0 ? lineNumber : lineNumber - 1
       var target = document.querySelector( '.line-' + targetIndex )
       
-      if( target.scrollIntoView )
+      if( target && target.scrollIntoView )
         target.scrollIntoView()
       
       highlight( program, lineNumber )
