@@ -611,6 +611,21 @@
           })          
         }
         
+        var jumpLabels = Object.keys( meta.jumps ).filter( function( key ){
+          var jump = meta.jumps[ key ]
+          
+          return jump.to === i
+        })
+        
+        jumpLabels.forEach( function( key ){
+          var target = document.createElement( 'div' )
+          target.className = 'target target-' + key
+          
+          target.textContent = key + ':'
+          
+          before.appendChild( target )
+        })
+        
         var div = document.createElement( 'div' )
         
         var marker = '  '
@@ -650,32 +665,42 @@
         div.appendChild( ins )
         
         if( line.length > 1 ){
+          var jumps = [ 'JUMP', 'JUMPZ', 'JUMPN' ]
+          var isJump = jumps.includes( line[ 0 ] )   
+
           var tileIndex = line[ 1 ]
           var reference = false
+          
           if( typeof tileIndex === 'string' ){
             tileIndex = parseInt( tileIndex.substr( 1 ) )
             reference = true
           }
           
           var label = meta.images.labels[ tileIndex ]
-          
+
           var ars = document.createElement( 'span' )
           ars.className = 'arg'
           
-          if( typeof label === 'string' ){
+          if( typeof label === 'string' && !isJump ){
             var canvas = hrm.draw.Canvas( label )
             
             var svg = canvas.toSvg()
             
             if( reference ){
-              svg = '[ ' + svg + ' ]'
+              svg = '[' + svg + ']'
             }
             
             ars.innerHTML = svg
           } else {
-            var arg = String( line[ 1 ] )
-            while( arg.length < 3 ){
-              arg = ' ' + arg
+            var arg
+
+            if( isJump ){
+              arg = Object.keys( meta.jumps ).find( function( j ){
+                var jump = meta.jumps[ j ]
+                return jump.from === i
+              })
+            } else {
+              arg = String( line[ 1 ] )
             }
             
             ars.textContent = arg
@@ -686,6 +711,22 @@
 
         dom.program.appendChild( before )
         dom.program.appendChild( div )
+      })
+      
+      //if there are jumps below the last line
+      var extraJumps = Object.keys( meta.jumps ).filter( function( key ){
+        var jump = meta.jumps[ key ]
+        
+        return jump.to >= program.length
+      })
+      
+      extraJumps.forEach( function( key ){
+        var target = document.createElement( 'div' )
+        target.className = 'target target-' + key
+        
+        target.textContent = key + ':'
+
+        dom.program.appendChild( target )
       })
       
       //if not in view
