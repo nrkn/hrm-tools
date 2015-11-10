@@ -12474,7 +12474,7 @@ var ensureValid = function ensureValid(p) {
 
   var inViewport = leftMost >= options.viewBounds.left && topMost >= options.viewBounds.top && width <= options.viewSize.width && height <= options.viewSize.height;
 
-  if (inRange(paths.value()) && inViewport) return paths(filtered).floor().value();
+  if (inRange(paths.value()) && inViewport) return paths.floor().value();
 
   var translated = paths.offset([-leftMost, -topMost]);
 

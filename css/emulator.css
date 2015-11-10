@@ -85,6 +85,18 @@ main h1, main h2, main h3, main h4, main h5, main h6 {
   color: #06c;  
 }
 
+#code pre .comment {
+  color: #999;
+  font-style: italic;
+}
+
+#code pre .image {
+  background: #f6f6f6;
+  width: 14em;
+  height: auto;
+  margin-top: 1em;
+}
+
 #stepSelect {
   display: flex;
   flex-direction: row;     
@@ -174,4 +186,9 @@ menu {
   text-align: center;
   line-height: 1.25;
   font-size: 0.8rem;
+}
+
+.floorTile .image {
+  background: #fafafa;
+  margin-top: -1rem;
 }

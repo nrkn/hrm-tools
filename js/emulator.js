@@ -66,6 +66,7 @@
   var cpu
   var steps
   var stepIndex
+  var meta
   
   stop()
   
@@ -113,69 +114,73 @@
     displayStep( stepIndex )
   }
   
+  
+  
   function init(){
     var level = Level( view.level() )
     var floor = Floor( level )
     var inbox = Inbox( level )
     var source = view.source()
     var program;
-
-    try{
-      program = hrm.parser( source )
-    } catch( e ){
-      alert( e )
-      stop()
-      return
-    }
     
-    view.inbox( inbox )
-    view.floor( floor )
-    
-    var cpuFloor = floor
-    if( floor.tiles.length === 0 && floor.columns === 0 && floor.rows === 0 ){
-      cpuFloor = {}
-    }
-    
-    cpu = hrm.cpu( program, inbox, cpuFloor )
-    
-    steps.push( JSON.parse( JSON.stringify( cpu.state ) ) )
-    
-    var state 
-    
-    function next(){
-      var succeeded
-      
-      try{
-        state = cpu.step()
-        succeeded = true
-      } catch( e ){
-        alert( e.message )
-        succeeded = false
-      } finally {
-        return succeeded
+    hrm.parser( source, function( err, program, m ){
+      if( err ){
+        alert( err )
+        stop()
+        return
       }
-    }
-    
-    if( !next() ){
-      stop()
-      return
-    }
-    
-    steps.push( JSON.parse( JSON.stringify( state ) ) )
-    
-    while( state.running ){
+      
+      meta = m
+      
+      view.inbox( inbox )
+      view.floor( floor )
+      
+      var cpuFloor = floor
+      if( floor.tiles.length === 0 && floor.columns === 0 && floor.rows === 0 ){
+        cpuFloor = {}
+      }
+      
+      cpu = hrm.cpu( program, inbox, cpuFloor )
+      
+      steps.push( JSON.parse( JSON.stringify( cpu.state ) ) )
+      
+      var state 
+      
+      function next(){
+        var succeeded
+        
+        try{
+          state = cpu.step()
+          succeeded = true
+        } catch( e ){
+          alert( e.message )
+          succeeded = false
+        } finally {
+          return succeeded
+        }
+      }
+      
       if( !next() ){
         stop()
         return
       }
       
-      steps.push( JSON.parse( JSON.stringify( state ) ) )      
-    }
-    
-    view.steps( steps.length - 1 )
-    stepIndex = 0
-    
-    displayStep( stepIndex )    
+      steps.push( JSON.parse( JSON.stringify( state ) ) )
+      
+      while( state.running ){
+        if( !next() ){
+          stop()
+          return
+        }
+        
+        steps.push( JSON.parse( JSON.stringify( state ) ) )      
+      }
+      
+      view.steps( steps.length - 1 )
+      stepIndex = 0
+      
+      displayStep( stepIndex )        
+    })
   }
   
   function step( noDisplay ){
@@ -542,6 +547,19 @@
 
           floorTile.appendChild( span )
           
+          if( meta ){
+            var labelImageData = meta.images.labels[ i ]
+            if( typeof labelImageData === 'string' ){
+              var canvas = hrm.draw.Canvas( labelImageData )
+              
+              var labelImage = document.createElement( 'div' )
+              labelImage.className = 'image'
+              labelImage.innerHTML = canvas.toSvg()
+              
+              floorTile.appendChild( labelImage )
+            }
+          }
+          
           row.appendChild( floorTile )              
         }
         
@@ -569,6 +587,30 @@
       dom.program.innerHTML = ''
       
       program.forEach( function( line, i ){
+        var before = document.createElement( 'div' )
+        
+        if( Array.isArray( meta.comments[ i ] ) ){
+          meta.comments[ i ].forEach( function( c ){
+            var comment = document.createElement( 'p' )          
+            comment.className = 'comment'            
+            comment.textContent = c
+
+            before.appendChild( comment )
+          })
+        }
+        
+        if( Array.isArray( meta.images.comments[ i ] ) ){
+          meta.images.comments[ i ].forEach( function( c ){            
+            var canvas = hrm.draw.Canvas( c )
+            
+            var commentImage = document.createElement( 'div' )          
+            commentImage.className = 'image'            
+            commentImage.innerHTML = canvas.toSvg()
+
+            before.appendChild( commentImage )            
+          })          
+        }
+        
         var div = document.createElement( 'div' )
         
         var marker = '  '
@@ -619,6 +661,7 @@
           div.appendChild( ars )
         } 
 
+        dom.program.appendChild( before )
         dom.program.appendChild( div )
       })
       
