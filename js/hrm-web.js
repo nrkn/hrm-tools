@@ -11932,7 +11932,294 @@ var jumps = ['JUMP', 'JUMPZ', 'JUMPN'];
 
 module.exports = HrmCpu;
 
-},{"./parse-args":41,"./polyfills":42,"./runtime-errors":43}],41:[function(require,module,exports){
+},{"./parse-args":43,"./polyfills":44,"./runtime-errors":45}],41:[function(require,module,exports){
+'use strict';
+
+require('./polyfills');
+
+var oneArity = ['INBOX', 'OUTBOX'];
+var twoArity = ['COPYFROM', 'COPYTO', 'ADD', 'SUB', 'BUMPUP', 'BUMPDN', 'JUMP', 'JUMPZ', 'JUMPN'];
+var jumps = ['JUMP', 'JUMPZ', 'JUMPN'];
+
+//make list of instructions before putting COMMENT in as comment is not a real instr
+var instr = oneArity.concat(twoArity);
+
+twoArity.push('COMMENT');
+
+var tokens = {
+  comment: {
+    start: /\-\-/,
+    end: /\n/
+  },
+  define: {
+    start: /DEFINE\s+(?:COMMENT|LABEL)\s+\d+\s+eJ[-a-z0-9+/=\s]+;/i,
+    end: /;/
+  },
+  label: {
+    start: /[a-z][a-z0-9]*:/,
+    end: /:/
+  },
+  direct: {
+    start: /\d+/,
+    end: /\s/
+  },
+  reference: {
+    start: /\[\d+\]/,
+    end: /\]/
+  },
+  word: {
+    start: /\w/,
+    end: /\s/
+  },
+  whitespace: {
+    start: /\s/,
+    end: /\s/
+  }
+};
+
+var mappers = {
+  define: function define(node) {
+    var segs = node.value.split(/\s/).filter(function (s) {
+      return s !== '';
+    });
+
+    return {
+      type: segs[1].toLowerCase() + 's',
+      id: Number(segs[2]),
+      image: segs.slice(3).join('')
+    };
+  },
+  direct: function direct(node) {
+    return Number(node.value);
+  },
+  word: function word(node) {
+    if (instr.includes(node.value.toUpperCase())) return node.value.toUpperCase();
+
+    return node.value;
+  }
+};
+
+var next = function next(str) {
+  var matches = Object.keys(tokens).map(function (key) {
+    return {
+      key: key,
+      match: tokens[key].start.exec(str)
+    };
+  });
+
+  var start = matches.find(function (m) {
+    return m.match && m.match.index === 0;
+  });
+  var end = tokens[start.key].end.exec(str);
+
+  return {
+    key: start.key,
+    start: start.match.index,
+    end: end.index
+  };
+};
+
+var tokenize = function tokenize(str) {
+  var tokens = [];
+
+  str += ' ';
+
+  while (str.length > 0) {
+    var n = next(str);
+    var token = str.substring(n.start, n.end + 1);
+
+    tokens.push({
+      key: n.key,
+      value: token.trim()
+    });
+
+    str = str.substring(n.end + 1);
+  }
+
+  return tokens.filter(function (t) {
+    return t.value !== '';
+  }).map(function (node) {
+    return mappers[node.key] ? {
+      key: node.key,
+      value: mappers[node.key](node)
+    } : node;
+  });
+};
+
+var Ast = function Ast(tokens) {
+  var ast = [];
+  var line = [];
+
+  while (tokens.length > 0) {
+    var token = tokens.shift();
+    var isWord = token.key === 'word';
+    var isInstr = instr.includes(token.value);
+    var current = JSON.parse(JSON.stringify(token));
+
+    if (twoArity.includes(token.value)) {
+      current.arg = tokens.shift();
+    }
+
+    line.push(current);
+
+    if (tokens.length === 0 || isWord && isInstr) {
+      ast.push(line);
+      line = [];
+    }
+  }
+
+  return ast;
+};
+
+var build = function build(str, callback) {
+  var isCb = typeof callback === 'function';
+
+  var meta = {
+    comments: {},
+    jumps: {},
+    images: {
+      comments: {},
+      labels: {}
+    }
+  };
+
+  var tokens = undefined;
+  try {
+    tokens = tokenize(str);
+  } catch (e) {
+    var error = Error('Unexpected value');
+    if (isCb) {
+      callback(error);
+    } else {
+      throw error;
+    }
+    return;
+  }
+
+  var defines = tokens.filter(function (t) {
+    return t.key === 'define';
+  });
+  var commentDefines = defines.filter(function (t) {
+    return t.value.type === 'comments';
+  });
+  var labelDefines = defines.filter(function (d) {
+    return d.value.type === 'labels';
+  });
+
+  var ast = Ast(tokens.filter(function (t) {
+    return t.key !== 'define';
+  }));
+
+  labelDefines.forEach(function (d) {
+    meta.images.labels[d.value.id] = d.value.image;
+  });
+
+  var program = [];
+
+  var handlers = {
+    word: function word(node, line) {
+      var isInstr = instr.includes(node.value);
+
+      if (isInstr) {
+        if (oneArity.includes(node.value)) {
+          program.push([node.value]);
+        } else {
+          var arg = node.arg.value;
+          program.push([node.value, arg]);
+        }
+      } else if (node.value === 'COMMENT') {
+        if (!Array.isArray(meta.images.comments[line])) meta.images.comments[line] = [];
+
+        var define = commentDefines.find(function (d) {
+          return d.value.id === node.arg.value;
+        });
+
+        meta.images.comments[line].push(define.value.image);
+      }
+    },
+    comment: function comment(node, line) {
+      if (!Array.isArray(meta.comments[line])) meta.comments[line] = [];
+
+      meta.comments[line].push(node.value);
+    },
+    label: function label(node, line) {
+      var name = node.value.replace(':', '');
+
+      meta.jumps[name] = {
+        to: line
+      };
+    }
+  };
+
+  ast.forEach(function (line, i) {
+    return line.forEach(function (node) {
+      return handlers[node.key](node, i);
+    });
+  });
+
+  program.forEach(function (line, i) {
+    var instr = line[0];
+
+    if (jumps.includes(instr)) {
+      var _name = line[1];
+      var to = meta.jumps[_name].to;
+
+      line[1] = to;
+      meta.jumps[_name].from = i;
+    }
+  });
+
+  if (isCb) {
+    callback(null, program, meta);
+  } else {
+    return program;
+  }
+};
+
+module.exports = function (asm, callback) {
+  var isCb = typeof callback === 'function';
+
+  if (isCb) {
+    build(asm, callback);
+  } else {
+    return build(asm);
+  }
+};
+
+},{"./polyfills":42}],42:[function(require,module,exports){
+'use strict';
+
+if (!Array.prototype.includes) {
+  Array.prototype.includes = function (searchElement /*, fromIndex*/) {
+    'use strict';
+    var O = Object(this);
+    var len = parseInt(O.length) || 0;
+    if (len === 0) {
+      return false;
+    }
+    var n = parseInt(arguments[1]) || 0;
+    var k;
+    if (n >= 0) {
+      k = n;
+    } else {
+      k = len + n;
+      if (k < 0) {
+        k = 0;
+      }
+    }
+    var currentElement;
+    while (k < len) {
+      currentElement = O[k];
+      if (searchElement === currentElement || searchElement !== searchElement && currentElement !== currentElement) {
+        return true;
+      }
+      k++;
+    }
+    return false;
+  };
+}
+
+},{}],43:[function(require,module,exports){
 'use strict';
 
 var parse = require('hrm-parser');
@@ -12149,7 +12436,7 @@ var State = function State() {
 
 module.exports = parseArgs;
 
-},{"hrm-parser":55}],42:[function(require,module,exports){
+},{"hrm-parser":41}],44:[function(require,module,exports){
 'use strict';
 
 if (!Array.prototype.includes) {
@@ -12182,7 +12469,7 @@ if (!Array.prototype.includes) {
   };
 }
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 require('./polyfills');
@@ -12311,7 +12598,7 @@ module.exports = function (instr, arg, state) {
   }
 };
 
-},{"./polyfills":42}],44:[function(require,module,exports){
+},{"./polyfills":44}],46:[function(require,module,exports){
 'use strict';
 
 var encode = require('hrm-image-encoder');
@@ -12327,7 +12614,7 @@ module.exports = function (paths) {
   }, '');
 };
 
-},{"./geometry":47,"hrm-image-encoder":53}],45:[function(require,module,exports){
+},{"./geometry":49,"hrm-image-encoder":55}],47:[function(require,module,exports){
 'use strict';
 
 var decode = require('hrm-image-decoder');
@@ -12489,7 +12776,7 @@ var ensureValid = function ensureValid(p) {
 
 module.exports = Canvas;
 
-},{"./asm":44,"./geometry":47,"./options":49,"./svg":50,"./text":51,"hrm-image-decoder":52,"hrm-image-encoder":53}],46:[function(require,module,exports){
+},{"./asm":46,"./geometry":49,"./options":51,"./svg":52,"./text":53,"hrm-image-decoder":54,"hrm-image-encoder":55}],48:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -12568,7 +12855,7 @@ module.exports = {
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 var Point = function Point(point) {
@@ -12922,7 +13209,7 @@ Paths.isPathsList = function (obj) {
 
 module.exports = { Point: Point, Path: Path, Paths: Paths };
 
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 var geometry = require('./geometry');
@@ -12931,7 +13218,7 @@ var Canvas = require('./canvas');
 
 module.exports = { geometry: geometry, text: text, Canvas: Canvas };
 
-},{"./canvas":45,"./geometry":47,"./text":51}],49:[function(require,module,exports){
+},{"./canvas":47,"./geometry":49,"./text":53}],51:[function(require,module,exports){
 "use strict";
 
 var width = 65535;
@@ -12977,7 +13264,7 @@ module.exports = {
   maxPoints: maxPoints
 };
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 var options = require('./options');
@@ -13000,7 +13287,7 @@ var pointToSvg = function pointToSvg(p) {
 
 module.exports = pathsToSvg;
 
-},{"./options":49}],51:[function(require,module,exports){
+},{"./options":51}],53:[function(require,module,exports){
 'use strict';
 
 var defaultOptions = require('./options');
@@ -13046,7 +13333,7 @@ module.exports = function (str, f, o) {
   return paths;
 };
 
-},{"./font":46,"./geometry":47,"./options":49}],52:[function(require,module,exports){
+},{"./font":48,"./geometry":49,"./options":51}],54:[function(require,module,exports){
 (function (Buffer){
 var zlib = require( 'zlib' )
 
@@ -13081,7 +13368,7 @@ module.exports = function( str ){
   return paths
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":16,"zlib":15}],53:[function(require,module,exports){
+},{"buffer":16,"zlib":15}],55:[function(require,module,exports){
 (function (Buffer){
 var zlib = require( 'zlib' )
 
@@ -13122,7 +13409,7 @@ module.exports = function( paths ){
   return split
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":16,"zlib":15}],54:[function(require,module,exports){
+},{"buffer":16,"zlib":15}],56:[function(require,module,exports){
 module.exports=[
   {
     "number": 1,
@@ -13992,7 +14279,7 @@ module.exports=[
   }
 ]
 
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 require('./polyfills');
@@ -14051,6 +14338,11 @@ var mappers = {
   },
   direct: function direct(node) {
     return Number(node.value);
+  },
+  word: function word(node) {
+    if (instr.includes(node.value.toUpperCase())) return node.value.toUpperCase();
+
+    return node.value;
   }
 };
 
@@ -14241,7 +14533,7 @@ module.exports = function (asm, callback) {
   }
 };
 
-},{"./polyfills":56}],56:[function(require,module,exports){
+},{"./polyfills":58}],58:[function(require,module,exports){
 'use strict';
 
 if (!Array.prototype.includes) {
@@ -14274,7 +14566,7 @@ if (!Array.prototype.includes) {
   };
 }
 
-},{}],57:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 window.hrm = {
@@ -14286,4 +14578,4 @@ window.hrm = {
   parser: require('hrm-parser')
 };
 
-},{"hrm-cpu":40,"hrm-draw":48,"hrm-image-decoder":52,"hrm-image-encoder":53,"hrm-level-data":54,"hrm-parser":55}]},{},[57]);
+},{"hrm-cpu":40,"hrm-draw":50,"hrm-image-decoder":54,"hrm-image-encoder":55,"hrm-level-data":56,"hrm-parser":57}]},{},[59]);
