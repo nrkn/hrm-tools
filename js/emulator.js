@@ -650,15 +650,38 @@
         div.appendChild( ins )
         
         if( line.length > 1 ){
-          var arg = String( line[ 1 ] )
-          while( arg.length < 3 ){
-            arg = ' ' + arg
+          var tileIndex = line[ 1 ]
+          var reference = false
+          if( typeof tileIndex === 'string' ){
+            tileIndex = parseInt( tileIndex.substr( 1 ) )
+            reference = true
           }
           
+          var label = meta.images.labels[ tileIndex ]
+          
           var ars = document.createElement( 'span' )
-          ars.textContent = arg
           ars.className = 'arg'
-          div.appendChild( ars )
+          
+          if( typeof label === 'string' ){
+            var canvas = hrm.draw.Canvas( label )
+            
+            var svg = canvas.toSvg()
+            
+            if( reference ){
+              svg = '[ ' + svg + ' ]'
+            }
+            
+            ars.innerHTML = svg
+          } else {
+            var arg = String( line[ 1 ] )
+            while( arg.length < 3 ){
+              arg = ' ' + arg
+            }
+            
+            ars.textContent = arg
+          }
+          
+          div.appendChild( ars )                      
         } 
 
         dom.program.appendChild( before )
