@@ -531,12 +531,11 @@
           floorTile.className = 'floorTile'
           
           var tile = document.createElement( 'div' )
+          tile.className = 'tile floor-' + i
             
           if( value === 0 || value ){
             tile.textContent = value            
-            tile.className = 'tile ' + typeof value
-          } else {
-            tile.className = 'tile'
+            tile.className += ' ' + typeof value
           }
             
           floorTile.appendChild( tile )
@@ -742,8 +741,87 @@
       highlight( program, lineNumber )
     }
     
-    function highlight( program, lineNumber ){
+    var tileToHand = function( lineNumber, arg ){
+      var i
+      var fromEl
       
+      if( typeof arg === 'number' ){
+        i = arg
+      } else {
+        i = parseInt( arg.substr( 1 ) )
+        fromEl = dom.floor.querySelector( '.floor-' + i )
+        fromEl.className += ' from-reference'
+        i = Number( fromEl.textContent )
+      }
+      
+      fromEl = dom.floor.querySelector( '.floor-' + i )
+      var toEl = dom.hand.querySelector( '.tile' )
+      
+      fromEl.className += ' from'
+      toEl.className += ' to'            
+    }
+    
+    var jump = function( lineNumber, arg ){
+      var key = Object.keys( meta.jumps ).find( function( j ){
+        var jump = meta.jumps[ j ]
+        return jump.from === lineNumber
+      })      
+      var target = document.querySelector( '.target-' + key )
+      target.className += ' current-target'
+    }
+    
+    var highlighters = {
+      'INBOX': function( lineNumber, arg ){
+        var fromEl = dom.inbox.querySelector( 'li:first-child' )
+        var toEl = dom.hand.querySelector( '.tile' )
+        
+        fromEl.className += ' from'
+        toEl.className += ' to'
+      },
+      'OUTBOX': function( lineNumber, arg ){
+        var fromEl = dom.hand.querySelector( '.tile' )
+        var tile = document.createElement( 'li' )
+        tile.className = 'tile to'
+        
+        dom.outbox.insertBefore( tile, dom.outbox.firstChild )
+        fromEl.className += ' from'
+      },
+      'COPYFROM': tileToHand,
+      'COPYTO': function( lineNumber, arg ){
+        var i
+        var toEl
+        
+        if( typeof arg === 'number' ){
+          i = arg
+        } else {
+          i = parseInt( arg.substr( 1 ) )
+          toEl = dom.floor.querySelector( '.floor-' + i )
+          toEl.className += ' to-reference'
+          i = Number( toEl.textContent )
+        }
+        
+        toEl = dom.floor.querySelector( '.floor-' + i )
+        var fromEl = dom.hand.querySelector( '.tile' )
+        
+        fromEl.className += ' from'
+        toEl.className += ' to'                  
+      },
+      'BUMPUP': tileToHand,
+      'BUMPDN': tileToHand,
+      'SUB': tileToHand,
+      'ADD': tileToHand,
+      'JUMP': jump,
+      'JUMPN': jump,
+      'JUMPZ': jump
+    }
+    
+    function highlight( program, lineNumber ){
+      var instr = program[ lineNumber ][ 0 ]
+      var arg = program[ lineNumber ][ 1 ]
+      
+      if( highlighters[ instr ] ){
+        highlighters[ instr ]( lineNumber, arg )
+      }
     }
     
     function setLevelName( level ){

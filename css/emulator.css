@@ -54,9 +54,29 @@ main.editing textarea {
   padding-right: 1.25em;
 }
 
+#tiles {
+  padding-top: 2px;
+}
+
 main h1, main h2, main h3, main h4, main h5, main h6 {
   padding-bottom: 0;
   border-bottom: none;
+}
+
+.from {
+  outline: 2px solid #0080ff;
+}
+
+.from-reference {
+  outline: 2px dashed #0080ff;
+}
+
+.to {
+  outline: 2px solid #1d0;
+}
+
+.to-reference {
+  outline: 2px dashed #1d0;
 }
 
 #code {
@@ -78,7 +98,7 @@ main h1, main h2, main h3, main h4, main h5, main h6 {
   color: #666;
 }
 
-#code pre .arg, #code pre .current span {
+#code pre .arg, #code pre .current span, #code pre .current-target {
   font-weight: 500;
 }
 
@@ -89,7 +109,7 @@ main h1, main h2, main h3, main h4, main h5, main h6 {
   vertical-align: middle;
 }
 
-#code pre .current span {
+#code pre .current span, #code pre .current-target {
   color: #06c;  
 }
 
@@ -140,7 +160,8 @@ menu {
 
 .conveyor {
   list-style: none;
-  padding-left: 0;
+  padding-left: 2px;
+  padding-top: 2px;
   margin: 0;
   font-size: 1rem;
   min-width: 5rem;
@@ -199,5 +220,5 @@ menu {
 
 .floorTile .image {
   background: #fafafa;
-  margin-top: -1rem;
+  margin-top: -0.8rem;
 }
