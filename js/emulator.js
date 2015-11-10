@@ -638,7 +638,7 @@
         
         div.className = className
         
-        var currentLine = String( i )
+        var currentLine = String( i + 1 )
         while( currentLine.length < 3 ){
           currentLine = ' ' + currentLine
         }
