@@ -816,6 +816,9 @@
     }
     
     function highlight( program, lineNumber ){
+      if( typeof program[ lineNumber ] === 'undefined' )
+        return
+      
       var instr = program[ lineNumber ][ 0 ]
       var arg = program[ lineNumber ][ 1 ]
       
